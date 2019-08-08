@@ -1,0 +1,127 @@
+%YAML 1.2
+---
+# http://www.sublimetext.com/docs/3/syntax.html
+name: Anselme
+comment: "Anselme v0.5.0 syntax"
+file_extensions:
+  - ans
+  - anselme
+scope: source.anselme
+
+variables:
+  identifier: '[^\s.{}§><()~+\-*/%^=!&|:,\n#][^.{}§><()~+\-*/%^=!&|:,\n#]*'
+
+contexts:
+  main:
+    - match: ^\s*\(.*$
+      scope: comment.anselme
+    - match: ^\s*(§)(.*?)\((.*)\)$
+      captures:
+        1: keyword.control.anselme
+        2: entity.name.function.anselme
+        3: variable.parameter.anselme
+    - match: ^\s*(§)(.*)$
+      captures:
+        1: keyword.control.anselme
+        2: entity.name.function.anselme
+    - match: '^\s*>'
+      scope: keyword.control.conditional.anselme
+      push: text_formatting
+    - match: '^\s*[:=+\-*/%!&|]'
+      scope: keyword.operator.assignment.anselme
+      push: line_expression
+    - match: '^\s*~~?'
+      scope: keyword.control.conditional.anselme
+      push: line_expression
+    - match: '^\s*#'
+      scope: keyword.other.anselme
+      push: tag_expression
+    - match: '^\s*@'
+      scope: keyword.control.anselme
+      push: line_expression
+    - match: '^\s*(?<!\n)(?![(§>:=+\-*/%!&|~\n@])'
+      push: text_formatting
+
+  text_formatting:
+    - meta_scope: markup.quote.anselme
+    - match: '\{'
+      scope: keyword.other.anselme
+      push: brace_expression
+    - match: '\\$'
+      scope: keyword.other.anselme
+    - match: '~'
+      scope: keyword.control.conditional.anselme
+      set: line_expression
+    - match: '#'
+      scope: keyword.other.anselme
+      set: tag_expression
+    - match: '\n'
+      pop: true
+
+  expression:
+    - meta_scope: meta.group.anselme
+    - match: '[|&!]'
+      scope: keyword.operator.logical.anselme
+    - match: '[+\-*/%^<>=]'
+      scope: keyword.operator.arithmetic.anselme
+    - match: '\.'
+      scope: punctuation.accessor.anselme
+    - match: \d*\.\d+
+      scope: constant.numeric.float.anselme
+    - match: \d+
+      scope: constant.numeric.integer.anselme
+    - match: \"
+      scope: punctuation.definition.string.begin
+      push: string
+    - match: '({{identifier}})(\()'
+      captures:
+        1: variable.function.anselme
+        2: keyword.other.anselme
+      push: arguments
+    - match: '\('
+      scope: keyword.other.anselme
+      push: parenthesis_expression
+    - match: '{{identifier}}'
+      scope: variable.other.anselme
+    - match: '\n'
+      pop: true
+
+  parenthesis_expression:
+    - include: expression
+    - match: '\)'
+      scope: keyword.other.anselme
+      pop: true
+
+  brace_expression:
+    - include: expression
+    - match: '\}'
+      scope: keyword.other.anselme
+      pop: true
+
+  line_expression:
+    - include: expression
+    - match: '~'
+      scope: keyword.control.conditional.anselme
+      set: line_expression
+    - match: '#'
+      scope: keyword.other.anselme
+      set: tag_expression
+
+  tag_expression:
+    - include: line_expression
+    - match: ':'
+      scope: punctuation.definition.annotation
+    - match: ','
+      scope: punctuation.separator.anselme
+
+  string:
+    - meta_scope: string.quoted.double
+    - match: \"
+      scope: punctuation.definition.string.end
+      pop: true
+
+  arguments:
+    - include: parenthesis_expression
+    - meta_content_scope: variable.parameter.anselme
+    - match: ','
+      scope: punctuation.separator.anselme
