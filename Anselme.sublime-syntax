@@ -2,14 +2,14 @@
 ---
 # http://www.sublimetext.com/docs/3/syntax.html
 name: Anselme
-comment: "Anselme v0.5.0 syntax"
+comment: "Anselme v0.10.0 syntax"
 file_extensions:
   - ans
   - anselme
 scope: source.anselme
 
 variables:
-  identifier: '[^\s.{}§><()~+\-*/%^=!&|:,\n#][^.{}§><()~+\-*/%^=!&|:,\n#]*'
+  identifier: '[^\{\}\§\>\<\(\)\~\+\-\*\/\%\=\!\&\|\:\^\,\@\s\%\.\"\d][^\{\}\§\>\<\(\)\~\+\-\*\/\%\=\!\&\|\:\^\,\@\s\%\.\"]*'
 
 contexts:
   main:
@@ -35,7 +35,7 @@ contexts:
       push: line_expression
     - match: '^\s*#'
       scope: keyword.other.anselme
-      push: tag_expression
+      push: line_expression
     - match: '^\s*@'
       scope: keyword.control.anselme
       push: line_expression
@@ -54,7 +54,7 @@ contexts:
       set: line_expression
     - match: '#'
       scope: keyword.other.anselme
-      set: tag_expression
+      set: line_expression
     - match: '\n'
       pop: true
 
@@ -64,8 +64,8 @@ contexts:
       scope: keyword.operator.logical.anselme
     - match: '[+\-*/%^<>=]'
       scope: keyword.operator.arithmetic.anselme
-    - match: '\.'
-      scope: punctuation.accessor.anselme
+    - match: '[:,]'
+      scope: keyword.operator.anselme
     - match: \d*\.\d+
       scope: constant.numeric.float.anselme
     - match: \d+
@@ -105,14 +105,7 @@ contexts:
       set: line_expression
     - match: '#'
       scope: keyword.other.anselme
-      set: tag_expression
-
-  tag_expression:
-    - include: line_expression
-    - match: ':'
-      scope: punctuation.definition.annotation
-    - match: ','
-      scope: punctuation.separator.anselme
+      set: line_expression
 
   string:
     - meta_scope: string.quoted.double
