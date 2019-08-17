@@ -9,7 +9,7 @@ file_extensions:
 scope: source.anselme
 
 variables:
-  identifier: '[^\{\}\§\>\<\(\)\~\+\-\*\/\%\=\!\&\|\:\^\,\@\s\%\.\"\d][^\{\}\§\>\<\(\)\~\+\-\*\/\%\=\!\&\|\:\^\,\@\s\%\.\"]*'
+  identifier: '[^\{\}\§\>\<\(\)\~\+\-\*\/\%\=\!\&\|\:\^\,\@\s\.\#\"\d][^\{\}\§\>\<\(\)\~\+\-\*\/\%\=\!\&\|\:\^\,\@\s\.\#\"]*'
 
 contexts:
   main:
@@ -49,14 +49,28 @@ contexts:
       push: brace_expression
     - match: '\\$'
       scope: keyword.other.anselme
+    - include: decorable
+    - match: '\n'
+      pop: true
+
+  line_expression:
+    - include: expression
+    - include: decorable
+    - match: '\n'
+      pop: true
+
+  decorable:
     - match: '~'
       scope: keyword.control.conditional.anselme
       set: line_expression
     - match: '#'
       scope: keyword.other.anselme
       set: line_expression
-    - match: '\n'
-      pop: true
+    - match: '(§)([^\~\#\§\n]*)'
+      captures:
+        1: keyword.control.anselme
+        2: entity.name.function.anselme
+      set: line_expression
 
   expression:
     - meta_scope: meta.group.anselme
@@ -83,8 +97,6 @@ contexts:
       push: parenthesis_expression
     - match: '{{identifier}}'
       scope: variable.other.anselme
-    - match: '\n'
-      pop: true
 
   parenthesis_expression:
     - include: expression
@@ -97,15 +109,6 @@ contexts:
     - match: '\}'
       scope: keyword.other.anselme
       pop: true
-
-  line_expression:
-    - include: expression
-    - match: '~'
-      scope: keyword.control.conditional.anselme
-      set: line_expression
-    - match: '#'
-      scope: keyword.other.anselme
-      set: line_expression
 
   string:
     - meta_scope: string.quoted.double
