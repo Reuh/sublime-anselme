@@ -9,7 +9,7 @@ file_extensions:
 scope: source.anselme
 
 variables:
-  identifier: '[^\{\}\§\>\<\(\)\~\+\-\*\/\%\=\!\&\|\:\^\,\@\s\.\#\"\d][^\{\}\§\>\<\(\)\~\+\-\*\/\%\=\!\&\|\:\^\,\@\s\.\#\"]*'
+  identifier: '[^\{\}\§\>\<\(\)\~\+\-\*\/\%\=\?\!\&\|\:\^\,\@\s\.\#\"\d][^\{\}\§\>\<\(\)\~\+\-\*\/\%\=\?\!\&\|\:\^\,\@\s\.\#\"]*'
 
 contexts:
   main:
@@ -74,7 +74,7 @@ contexts:
 
   expression:
     - meta_scope: meta.group.anselme
-    - match: '[|&!]'
+    - match: '[|&!?]'
       scope: keyword.operator.logical.anselme
     - match: '[+\-*/%^<>=]'
       scope: keyword.operator.arithmetic.anselme
