@@ -2,122 +2,228 @@
 ---
 # http://www.sublimetext.com/docs/3/syntax.html
 name: Anselme
-comment: "Anselme v0.10.0 syntax"
+comment: "Anselme v25, and probably later, syntax"
 file_extensions:
   - ans
   - anselme
 scope: source.anselme
 
 variables:
-  identifier: '[^\{\}\§\>\<\(\)\~\+\-\*\/\%\=\?\!\&\|\:\^\,\@\s\.\#\"\d][^\{\}\§\>\<\(\)\~\+\-\*\/\%\=\?\!\&\|\:\^\,\@\s\.\#\"]*'
+  identifier: '[^\~\`\^\+\-\=\<\>\/\[\]\*\{\}\|\\\_\!\?\,\;\:\(\)\"\@\&\$\#\%\.\d\s][^\~\`\^\+\-\=\<\>\/\[\]\*\{\}\|\\\_\!\?\,\;\:\(\)\"\@\&\$\#\%\.]*'
+  operator: '[;:=+-/*%^,~?#|&!><!.]+'
 
 contexts:
+  # Line types
   main:
     - match: ^\s*\(.*$
-      scope: comment.anselme
-    - match: ^\s*(§)(.*?)\((.*)\)$
-      captures:
-        1: keyword.control.anselme
-        2: entity.name.function.anselme
-        3: variable.parameter.anselme
-    - match: ^\s*(§)(.*)$
-      captures:
-        1: keyword.control.anselme
-        2: entity.name.function.anselme
-    - match: '^\s*>'
+      scope: comment.line.anselme
+    - match: ^\s*~[~?]?
       scope: keyword.control.conditional.anselme
-      push: text_formatting
-    - match: '^\s*[:=+\-*/%!&|]'
-      scope: keyword.operator.assignment.anselme
-      push: line_expression
-    - match: '^\s*~~?'
-      scope: keyword.control.conditional.anselme
-      push: line_expression
-    - match: '^\s*#'
-      scope: keyword.other.anselme
-      push: line_expression
-    - match: '^\s*@'
+      push: expression
+    - match: ^\s*@
       scope: keyword.control.anselme
-      push: line_expression
-    - match: '^\s*(?<!\n)(?![(§>:=+\-*/%!&|~\n@])'
-      push: text_formatting
-
-  text_formatting:
-    - meta_scope: markup.quote.anselme
-    - match: '\{'
+      push: expression
+    - match: ^\s*#
       scope: keyword.other.anselme
-      push: brace_expression
-    - match: '\\$'
-      scope: keyword.other.anselme
-    - include: decorable
-    - match: '\n'
-      pop: true
-
-  line_expression:
-    - include: expression
-    - include: decorable
-    - match: '\n'
-      pop: true
-
-  decorable:
-    - match: '~'
+      push: expression
+    - match: ^\s*\>
       scope: keyword.control.conditional.anselme
-      set: line_expression
-    - match: '#'
+      push: text
+    - match: ^\s*:~?[$!%]
       scope: keyword.other.anselme
-      set: line_expression
-    - match: '(§)([^\~\#\§\n]*)'
-      captures:
-        1: keyword.control.anselme
-        2: entity.name.function.anselme
-      set: line_expression
+      push: function_definition_start
+    - match: ^\s*\:~?
+      scope: keyword.other.anselme
+      push: variable_definition_start
+    - match: ^\s*
+      push: text
 
-  expression:
-    - meta_scope: meta.group.anselme
-    - match: '[|&!?]'
-      scope: keyword.operator.logical.anselme
-    - match: '[+\-*/%^<>=]'
-      scope: keyword.operator.arithmetic.anselme
-    - match: '[:,]'
+  # Text lines
+  text:
+    - meta_scope: text.anselme
+    - match: \\.
+      scope: constant.character.escape.anselme
+    - match: '[~#]'
       scope: keyword.operator.anselme
-    - match: \d*\.\d+
-      scope: constant.numeric.float.anselme
-    - match: \d+
-      scope: constant.numeric.integer.anselme
-    - match: \"
-      scope: punctuation.definition.string.begin
-      push: string
-    - match: '({{identifier}})(\()'
+      push: expression
+    - include: string_interpolable
+    - include: string_subtextable
+    - include: pop_on_line_end
+
+  # Function definition
+  function_definition_start:
+    - meta_scope: meta.function.anselme
+    - match: '({{identifier}}|_?{{operator}}_?|\{\}|\(\))(?:(:)({{identifier}}))?'
       captures:
-        1: variable.function.anselme
-        2: keyword.other.anselme
-      push: arguments
-    - match: '\('
-      scope: keyword.other.anselme
-      push: parenthesis_expression
-    - match: '{{identifier}}'
-      scope: variable.other.anselme
-
-  parenthesis_expression:
-    - include: expression
-    - match: '\)'
-      scope: keyword.other.anselme
-      pop: true
-
-  brace_expression:
-    - include: expression
-    - match: '\}'
-      scope: keyword.other.anselme
-      pop: true
-
-  string:
-    - meta_scope: string.quoted.double
-    - match: \"
-      scope: punctuation.definition.string.end
-      pop: true
-
-  arguments:
-    - include: parenthesis_expression
-    - meta_content_scope: variable.parameter.anselme
+        1: entity.name.function.anselme
+        2: punctuation.separator.anselme
+        3: entity.name.function.anselme
+      set: function_definition_args
+    - include: pop_on_line_end
+  function_definition_args:
+    - match: \(
+      scope: punctuation.section.parens.start.anselme
+      push: parameter_paren
+    - include: pop_on_line_end
+  parameter_paren:
+    - meta_scope: meta.function.parameters.anselme
+    - match: '({{identifier}})(?:(:)({{identifier}}))?(=|::)'
+      captures:
+        1: variable.parameter.anselme
+        2: punctuation.separator.anselme
+        3: variable.parameter.anselme
+        4: keyword.operator.anselme
+      push: parameter_default
+    - match: '({{identifier}})(?:(:)({{identifier}}))?'
+      captures:
+        1: variable.parameter.anselme
+        2: punctuation.separator.anselme
+        3: variable.parameter.anselme
     - match: ','
       scope: punctuation.separator.anselme
+    - match: \)
+      scope: punctuation.section.parens.end.anselme
+      pop: true
+  parameter_default:
+    - match: '(?=,|\))'
+      scope: punctuation.separator.anselme
+      pop: true
+    - include: expression
+
+  # Variable definition
+  variable_definition_start:
+    - match: '(:)\s*({{identifier}})(?:(:)({{identifier}}))?'
+      captures:
+        1: keyword.other.anselme
+        2: variable.other.constant.anselme
+        3: punctuation.separator.anselme
+        4: variable.other.constant.anselme
+      set: variable_definition_value
+    - match: '({{identifier}})(?:(:)({{identifier}}))?'
+      captures:
+        1: variable.other.anselme
+        2: punctuation.separator.anselme
+        3: variable.other.anselme
+      set: variable_definition_value
+    - include: pop_on_line_end
+  variable_definition_value:
+    - match: \=
+      scope: keyword.operator.assignment.anselme
+      push: expression
+    - include: pop_on_line_end
+
+  # Expressions
+  expression:
+    - match: \s+
+    - match: \d*\.\d+|\d+
+      scope: constant.numeric.anselme
+    - match: \(
+      scope: punctuation.section.parens.start.anselme
+      push: paren
+    - match: \)
+      scope: invalid.illegal.stray-paren-end.anselme
+    - match: \[
+      scope: punctuation.section.brackets.start.anselme
+      push: list
+    - match: \]
+      scope: invalid.illegal.stray-bracket-end.anselme
+    - match: \{
+      scope: punctuation.section.braces.start.anselme
+      push: map
+    - match: \{
+      scope: invalid.illegal.stray-brace-end.anselme
+    - match: '({{identifier}})(?=\(|!\s*(?!\(|{{identifier}}|\[|\{))'
+      scope: variable.function.anselme
+    - match: '({{identifier}})(=)(?!{{operator}})'
+      captures:
+        1: string.unquoted.anselme
+        2: keyword.operator.anselme
+    - match: '{{identifier}}'
+      scope: variable.other.anselme
+    - match: '(?<!\s)\s*(!)\s*({{identifier}})'
+      captures:
+        1: keyword.operator.anselme
+        2: variable.function.anselme
+    - match: \.
+      scope: punctuation.accessor.anselme
+    - match: ','
+      scope: punctuation.separator.anselme
+    - match: '{{operator}}'
+      scope: keyword.operator.anselme
+    - match: \"
+      scope: punctuation.definition.string.begin.anselme
+      push: string
+    - match: ""
+      pop: true
+
+  # Sub-expressions
+  string_interpolation:
+    - clear_scopes: true
+    - meta_scope: meta.interpolation.anselme
+    - match: \}
+      scope: punctuation.section.interpolation.end.anselme
+      pop: true
+    - include: expression
+
+  string_subtext:
+    - clear_scopes: true
+    - meta_scope: meta.brackets.anselme
+    - meta_content_scope: text.anselme
+    - match: \]
+      scope: punctuation.section.brackets.end.anselme
+      pop: true
+    - match: '[~#]'
+      scope: keyword.operator.anselme
+      push: expression_in_subtext
+    - include: text
+  expression_in_subtext:
+    - match: \]
+      scope: punctuation.section.brackets.end.anselme
+      pop: true
+    - include: expression
+
+  string:
+    - meta_scope: string.quoted.double.anselme
+    - meta_content_scope: meta.string.anselme
+    - match: \\.
+      scope: constant.character.escape.anselme
+    - match: \"
+      scope: punctuation.definition.string.end.anselme
+      pop: true
+    - include: string_interpolable
+
+  paren:
+    - meta_scope: meta.parens.anselme
+    - match: \)
+      scope: punctuation.section.parens.end.anselme
+      pop: true
+    - include: expression
+
+  list:
+    - meta_scope: meta.brackets.anselme
+    - match: \]
+      scope: punctuation.section.brackets.end.anselme
+      pop: true
+    - include: expression
+
+  map:
+    - meta_scope: meta.braces.anselme
+    - match: \}
+      scope: punctuation.section.braces.end.anselme
+      pop: true
+    - include: expression
+
+  # Includes
+  string_interpolable:
+    - match: \{
+      scope: punctuation.section.interpolation.begin.anselme
+      push: string_interpolation
+
+  string_subtextable:
+    - match: \[
+      scope: punctuation.section.brackets.begin.anselme
+      push: string_subtext
+
+  pop_on_line_end:
+    - match: $
+      pop: true
