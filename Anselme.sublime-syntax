@@ -10,7 +10,7 @@ scope: source.anselme
 
 variables:
   identifier: '[^\~\`\^\+\-\=\<\>\/\[\]\*\{\}\|\\\_\!\?\,\;\:\(\)\"\@\&\$\#\%\.\d\s][^\~\`\^\+\-\=\<\>\/\[\]\*\{\}\|\\\_\!\?\,\;\:\(\)\"\@\&\$\#\%\.]*'
-  operator: '[;:=+-/*%^,~?#|&!><!.]+'
+  operator: '[;:=+-/*%^,~?#|&!><!.$]+'
 
 contexts:
   # Line types
@@ -63,7 +63,7 @@ contexts:
   function_definition_args:
     - match: \(
       scope: punctuation.section.parens.start.anselme
-      push: parameter_paren
+      set: parameter_paren
     - include: pop_on_line_end
   parameter_paren:
     - meta_scope: meta.function.parameters.anselme
@@ -84,6 +84,7 @@ contexts:
     - match: \)
       scope: punctuation.section.parens.end.anselme
       pop: true
+    - include: pop_on_line_end
   parameter_default:
     - match: '(?=,|\))'
       scope: punctuation.separator.anselme
@@ -99,11 +100,12 @@ contexts:
         3: punctuation.separator.anselme
         4: variable.other.constant.anselme
       set: variable_definition_value
-    - match: '({{identifier}})(?:(:)({{identifier}}))?'
+    - match: '(@?)\s*({{identifier}})(?:(:)({{identifier}}))?'
       captures:
-        1: variable.other.anselme
-        2: punctuation.separator.anselme
-        3: variable.other.anselme
+        1: keyword.other.anselme
+        2: variable.other.anselme
+        3: punctuation.separator.anselme
+        4: variable.other.anselme
       set: variable_definition_value
     - include: pop_on_line_end
   variable_definition_value:
@@ -122,6 +124,9 @@ contexts:
       push: paren
     - match: \)
       scope: invalid.illegal.stray-paren-end.anselme
+    - match: \%\[
+      scope: punctuation.section.brackets.start.anselme
+      push: string_subtext
     - match: \[
       scope: punctuation.section.brackets.start.anselme
       push: list
@@ -148,6 +153,9 @@ contexts:
       scope: punctuation.accessor.anselme
     - match: ','
       scope: punctuation.separator.anselme
+    - match: '\$(?=\()'
+      scope: keyword.other.anselme
+      push: function_definition_args
     - match: '{{operator}}'
       scope: keyword.operator.anselme
     - match: \"
@@ -177,7 +185,7 @@ contexts:
       push: expression_in_subtext
     - include: text
   expression_in_subtext:
-    - match: \]
+    - match: '(?=\])'
       scope: punctuation.section.brackets.end.anselme
       pop: true
     - include: expression
