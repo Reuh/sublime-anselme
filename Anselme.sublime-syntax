@@ -1,237 +1,258 @@
 %YAML 1.2
 ---
-# http://www.sublimetext.com/docs/3/syntax.html
-name: Anselme
-comment: "Anselme v25, and probably later, syntax"
+name: anselme v2
 file_extensions:
   - ans
   - anselme
 scope: source.anselme
+version: 2
 
 variables:
-  identifier: '[^\~\`\^\+\-\=\<\>\/\[\]\*\{\}\|\\\_\!\?\,\;\:\(\)\"\@\&\$\#\%\.\d\s][^\~\`\^\+\-\=\<\>\/\[\]\*\{\}\|\\\_\!\?\,\;\:\(\)\"\@\&\$\#\%\.]*'
-  operator: '[;:=+-/*%^,~?#|&!><!.$]+'
+  identifier_disallowed: '\.\~\`\^\+\-\=\<\>\/\[\]\*\{\}\|\\\_\!\?\,\;\:\(\)\"\@\&\$\#\%'
+  identifier: |-
+    (?x:
+      [^0-9\s\'{{identifier_disallowed}}][^{{identifier_disallowed}}]*
+      |\_( \! | \- | \* | \~ )
+      |( \! )\_
+      |\_( \|\> | \+ | \- | \/ | \/\/ | \* | \^ | \% | \& | \| | \=\= | \= | \!\= | \>\= | \<\= | \< | \> | \~ | \~\? | \. | \:\: | \# | \: )\_
+    )
 
 contexts:
-  # Line types
+  prototype:
+    - match: '\(\('
+      scope: comment.line.anselme punctuation.definition.comment.anselme
+      push: comment
+    - match: '\s+'
+    - match: '$'
+      pop: true
+
   main:
-    - match: ^\s*\(.*$
-      scope: comment.line.anselme
-    - match: ^\s*~[~?]?
-      scope: keyword.control.conditional.anselme
-      push: expression
-    - match: ^\s*@
-      scope: keyword.control.anselme
-      push: expression
-    - match: ^\s*#
-      scope: keyword.other.anselme
-      push: expression
-    - match: ^\s*\>
-      scope: keyword.control.conditional.anselme
-      push: text
-    - match: ^\s*:~?[$!%]
-      scope: keyword.other.anselme
-      push: function_definition_start
-    - match: ^\s*\:~?
-      scope: keyword.other.anselme
-      push: variable_definition_start
-    - match: ^\s*
-      push: text
+    - match: ''
+      push: primary
 
-  # Text lines
-  text:
-    - meta_scope: text.anselme
-    - match: \\.
-      scope: constant.character.escape.anselme
-    - match: '[~#]'
-      scope: keyword.operator.anselme
-      push: expression
-    - include: string_interpolable
-    - include: string_subtextable
-    - include: pop_on_line_end
-
-  # Function definition
-  function_definition_start:
-    - meta_scope: meta.function.anselme
-    - match: '({{identifier}}|_?{{operator}}_?|\{\}|\(\))(?:(:)({{identifier}}))?'
-      captures:
-        1: entity.name.function.anselme
-        2: punctuation.separator.anselme
-        3: entity.name.function.anselme
-      set: function_definition_args
-    - include: pop_on_line_end
-  function_definition_args:
-    - match: \(
-      scope: punctuation.section.parens.start.anselme
-      set: parameter_paren
-    - include: pop_on_line_end
-  parameter_paren:
-    - meta_scope: meta.function.parameters.anselme
-    - match: '({{identifier}})(?:(:)({{identifier}}))?(=|::)'
-      captures:
-        1: variable.parameter.anselme
-        2: punctuation.separator.anselme
-        3: variable.parameter.anselme
-        4: keyword.operator.anselme
-      push: parameter_default
-    - match: '({{identifier}})(?:(:)({{identifier}}))?'
-      captures:
-        1: variable.parameter.anselme
-        2: punctuation.separator.anselme
-        3: variable.parameter.anselme
-    - match: ','
-      scope: punctuation.separator.anselme
-    - match: \)
-      scope: punctuation.section.parens.end.anselme
+  comment:
+    - meta_scope: comment.line.anselme
+    - match: '\(\('
+      scope: punctuation.definition.comment.anselme
+      push: comment
+    - match: '\)\)|$'
+      scope: punctuation.definition.comment.anselme
       pop: true
-    - include: pop_on_line_end
-  parameter_default:
-    - match: '(?=,|\))'
-      scope: punctuation.separator.anselme
-      pop: true
-    - include: expression
 
-  # Variable definition
-  variable_definition_start:
-    - match: '(:)\s*({{identifier}})(?:(:)({{identifier}}))?'
-      captures:
-        1: keyword.other.anselme
-        2: variable.other.constant.anselme
-        3: punctuation.separator.anselme
-        4: variable.other.constant.anselme
-      set: variable_definition_value
-    - match: '(@?)\s*({{identifier}})(?:(:)({{identifier}}))?'
-      captures:
-        1: keyword.other.anselme
-        2: variable.other.anselme
-        3: punctuation.separator.anselme
-        4: variable.other.anselme
-      set: variable_definition_value
-    - include: pop_on_line_end
-  variable_definition_value:
-    - match: \=
-      scope: keyword.operator.assignment.anselme
-      push: expression
-    - include: pop_on_line_end
+  ## Primary elements ##
 
-  # Expressions
-  expression:
-    - match: \s+
-    - match: \d*\.\d+|\d+
+  primary:
+    - match: '\d*\.\d+|\d+'
       scope: constant.numeric.anselme
-    - match: \(
-      scope: punctuation.section.parens.start.anselme
-      push: paren
-    - match: \)
-      scope: invalid.illegal.stray-paren-end.anselme
-    - match: \%\[
-      scope: punctuation.section.brackets.start.anselme
-      push: string_subtext
-    - match: \[
-      scope: punctuation.section.brackets.start.anselme
-      push: list
-    - match: \]
-      scope: invalid.illegal.stray-bracket-end.anselme
-    - match: \{
-      scope: punctuation.section.braces.start.anselme
-      push: map
-    - match: \{
-      scope: invalid.illegal.stray-brace-end.anselme
-    - match: '({{identifier}})(?=\(|!\s*(?!\(|{{identifier}}|\[|\{))'
-      scope: variable.function.anselme
-    - match: '({{identifier}})(=)(?!{{operator}})'
-      captures:
-        1: string.unquoted.anselme
-        2: keyword.operator.anselme
-    - match: '{{identifier}}'
-      scope: variable.other.anselme
-    - match: '(?<!\s)\s*(!)\s*({{identifier}})'
-      captures:
-        1: keyword.operator.anselme
-        2: variable.function.anselme
-    - match: \.
-      scope: punctuation.accessor.anselme
-    - match: ','
-      scope: punctuation.separator.anselme
-    - match: '\$(?=\()'
-      scope: keyword.other.anselme
-      push: function_definition_args
-    - match: '{{operator}}'
-      scope: keyword.operator.anselme
-    - match: \"
+      push: secondary
+    - match: '\"'
       scope: punctuation.definition.string.begin.anselme
       push: string
-    - match: ""
+    - match: '\|'
+      scope: keyword.other.anselme
+      push: text
+    - match: '\('
+      scope: punctuation.section.parens.begin.anselme
+      push: parenthesis
+    - match: '\::?[&@]?\$'
+      scope: keyword.declaration.anselme
+      push: function_definition
+    - match: '(\::?[&@]?)({{identifier}})'
+      captures:
+        1: keyword.declaration.anselme
+        2: variable.other.anselme
+      push: secondary
+    - match: '{{identifier}}(?=\!(?!\s*{{identifier}})|\()'
+      scope: variable.function.anselme
+      set: secondary
+    - match: '{{identifier}}'
+      scope: variable.other.anselme
+      push: secondary
+    - match: '\_'
+      scope: variable.language.anselme
+      push: secondary
+    - match: '\['
+      scope: punctuation.section.sequence.begin.anselme
+      push: tuple
+    - match: '\{'
+      scope: punctuation.section.sequence.mapping.anselme
+      push: struct
+    - include: prefixes_primary
+    - match: ''
       pop: true
 
-  # Sub-expressions
-  string_interpolation:
-    - clear_scopes: true
-    - meta_scope: meta.interpolation.anselme
-    - match: \}
-      scope: punctuation.section.interpolation.end.anselme
-      pop: true
-    - include: expression
-
-  string_subtext:
-    - clear_scopes: true
-    - meta_scope: meta.brackets.anselme
-    - meta_content_scope: text.anselme
-    - match: \]
-      scope: punctuation.section.brackets.end.anselme
-      pop: true
-    - match: '[~#]'
+  prefixes_primary:
+    - match: '(\$)\s*(\()'
+      captures:
+        1: meta.function.anselme keyword.declaration.anselme
+        2: meta.function.parameters.anselme punctuation.section.parameters.begin.anselme
+      push: function_parameters
+    - match: '\$'
+      scope: keyword.declaration.anselme meta.function.anselme
+      set: primary
+    - match: '\~'
+      scope: keyword.control.conditional.anselme
+      set: primary
+    - match: '\@|\;'
+      scope: keyword.control.anselme
+      set: primary
+    - match: '\-'
+      scope: keyword.operator.arithmetic.anselme
+      set: primary
+    - match: '\!'
+      scope: keyword.operator.logical.anselme
+      set: primary
+    - match: '\*'
       scope: keyword.operator.anselme
-      push: expression_in_subtext
-    - include: text
-  expression_in_subtext:
-    - match: '(?=\])'
-      scope: punctuation.section.brackets.end.anselme
+      set: primary
+
+  ## Function definition ##
+  # The parameter parsing here is a very bad approximation, but properly handling this would require handling operator priority in this syntax file, so no.
+  # Maybe I should look at tree sitter or something.
+
+  function_parameters:
+    - meta_scope: meta.function.parameters.anselme
+    - match: '{{identifier}}'
+      scope: variable.parameter.anselme
+      embed: secondary
+      escape: '(?=\)|\,)'
+    - match: '\,'
+      scope: punctuation.separator.parameters.anselme
+    - match: '(\))\s*(\=)'
+      captures:
+        1: punctuation.section.parameters.end.anselme
+        2: keyword.operator.assignment.anselme
+      push: secondary
+    - match: '\)'
+      scope: punctuation.section.parameters.end.anselme
+      push: secondary
+    - match: ''
       pop: true
-    - include: expression
+
+  function_definition:
+    - match: '({{identifier}})\s*(\()'
+      captures:
+        1: meta.function.parameters.anselme entity.name.function.anselme
+        2: meta.function.parameters.anselme punctuation.section.parameters.begin.anselme
+      set: function_parameters
+    - match: '{{identifier}}'
+      scope: meta.function.parameters.anselme entity.name.function.anselme
+      pop: true
+    - match: ''
+      pop: true
+
+  ## String & text ##
+
+  expression_interpolation:
+    - match: '\{'
+      scope: punctuation.section.interpolation.begin.anselme
+      embed: primary
+      embed_scope: source.anselme.embedded
+      escape: '\}'
+      escape_captures:
+        0: punctuation.section.interpolation.end.anselme
+
+  character_escape:
+    - match: '\\.'
+      scope: constant.character.escape.anselme
 
   string:
-    - meta_scope: string.quoted.double.anselme
-    - meta_content_scope: meta.string.anselme
-    - match: \\.
-      scope: constant.character.escape.anselme
-    - match: \"
+    - meta_scope: meta.string.anselme string.quoted.double.anselme
+    - include: expression_interpolation
+    - include: character_escape
+    - match: '\"'
       scope: punctuation.definition.string.end.anselme
-      pop: true
-    - include: string_interpolable
+      set: secondary
 
-  paren:
+  text:
+    - meta_scope: text.anselme
+    - include: expression_interpolation
+    - include: character_escape
+    - match: '\|'
+      scope: keyword.other.anselme
+      set: secondary
+
+  ## Other primary elements ##
+
+  parenthesis:
     - meta_scope: meta.parens.anselme
-    - match: \)
+    - match: '\)'
       scope: punctuation.section.parens.end.anselme
+      set: secondary
+    - include: primary
+
+  tuple:
+    - meta_scope: meta.sequence.tuple.anselme
+    - include: primary
+    - match: '\,'
+      scope: punctuation.separator.sequence.anselme
+    - match: '\]'
+      scope: punctuation.section.sequence.end.anselme
+      set: secondary
+
+  struct:
+    - meta_scope: meta.mapping.anselme
+    - include: primary
+    - match: '\,'
+      scope: punctuation.separator.sequence.anselme
+    - match: '\}'
+      scope: punctuation.section.mapping.end.anselme
+      set: secondary
+
+  ## Secondary operators ##
+
+  secondary:
+    - match: '\;'
+      scope: keyword.control.anselme
+      push: primary
+    - match: '\,'
+      scope: punctuation.separator.sequence.anselme
+      push: primary
+    - match: '\~|\~\?|\|\>'
+      scope: keyword.control.conditional.anselme
+      push: primary
+    - match: '\#|\:\:|\:'
+      scope: keyword.operator.anselme
+      push: primary
+    - match: '\&|\|'
+      scope: keyword.operator.logical.anselme
+      push: primary
+    - match: '\=\=|\!\=|\<\=|\>\=|\<|\>'
+      scope: keyword.operator.comparison.anselme
+      push: primary
+    - match: '\+|\-|\*|\/\/|\/|\%|\^'
+      scope: keyword.operator.arithmetic.anselme
+      push: primary
+    - match: '\.'
+      scope: punctuation.accessor.anselme
+      push: primary
+    - match: '(\!)\s*({{identifier}})'
+      scope: meta.function-call
+      captures:
+        1: keyword.operaor.anselme
+        2: variable.function.anselme
+      set: secondary
+    - match: '\!'
+      scope: keyword.operaor.anselme
+      push: primary
+    - match: '\='
+      scope: keyword.operator.assignment.anselme
+      push: primary
+    - include: suffix_secondary
+    - match: ''
       pop: true
-    - include: expression
 
-  list:
-    - meta_scope: meta.brackets.anselme
-    - match: \]
-      scope: punctuation.section.brackets.end.anselme
-      pop: true
-    - include: expression
-
-  map:
-    - meta_scope: meta.braces.anselme
-    - match: \}
-      scope: punctuation.section.braces.end.anselme
-      pop: true
-    - include: expression
-
-  # Includes
-  string_interpolable:
-    - match: \{
-      scope: punctuation.section.interpolation.begin.anselme
-      push: string_interpolation
-
-  string_subtextable:
-    - match: \[
-      scope: punctuation.section.brackets.begin.anselme
-      push: string_subtext
-
-  pop_on_line_end:
-    - match: $
-      pop: true
+  suffix_secondary:
+    - match: '\;'
+      scope: keyword.control.anselme
+      set: secondary
+    - match: '\!'
+      scope: keyword.operator.anselme
+      set: secondary
+    - match: '\('
+      scope: punctuation.section.arguments.begin.anselme
+      set:
+        - match: '\)'
+          scope: punctuation.section.arguments.end.anselme
+          set: secondary
+        - include: primary
