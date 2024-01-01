@@ -19,7 +19,7 @@ variables:
 
 contexts:
   prototype:
-    - match: '\(\('
+    - match: '\/\*'
       scope: comment.line.anselme punctuation.definition.comment.anselme
       push: comment
     - match: '\s+'
@@ -32,10 +32,10 @@ contexts:
 
   comment:
     - meta_scope: comment.line.anselme
-    - match: '\(\('
+    - match: '\/\*'
       scope: punctuation.definition.comment.anselme
       push: comment
-    - match: '\)\)|$'
+    - match: '\*\/|$'
       scope: punctuation.definition.comment.anselme
       pop: true
 
@@ -54,10 +54,15 @@ contexts:
     - match: '\('
       scope: punctuation.section.parens.begin.anselme
       push: parenthesis
-    - match: '\::?[&@]?\$'
+    - match: '\::?&?@?\$'
       scope: keyword.declaration.anselme
       push: function_definition
-    - match: '(\::?[&@]?)({{identifier}})'
+    - match: '(\#)({{identifier}})'
+      captures:
+        1: keyword.declaration.anselme
+        2: entity.name.label.anselme
+      push: secondary
+    - match: '(\::?&?@?)({{identifier}})'
       captures:
         1: keyword.declaration.anselme
         2: variable.other.anselme
@@ -102,7 +107,7 @@ contexts:
     - match: '\!'
       scope: keyword.operator.logical.anselme
       set: primary
-    - match: '\*'
+    - match: '\*|\%|\>'
       scope: keyword.operator.anselme
       set: primary
 
@@ -211,7 +216,7 @@ contexts:
     - match: '\~|\~\?|\|\>'
       scope: keyword.control.conditional.anselme
       push: primary
-    - match: '\#|\:\:|\:'
+    - match: '\#|\:\:|\:|\-\>'
       scope: keyword.operator.anselme
       push: primary
     - match: '\&|\|'
