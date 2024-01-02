@@ -14,7 +14,7 @@ variables:
       [^0-9\s\'{{identifier_disallowed}}][^{{identifier_disallowed}}]*
       |\_( \! | \- | \* | \~ )
       |( \! )\_
-      |\_( \|\> | \+ | \- | \/ | \/\/ | \* | \^ | \% | \& | \| | \=\= | \= | \!\= | \>\= | \<\= | \< | \> | \~ | \~\? | \. | \:\: | \# | \: )\_
+      |\_( \|\> | \+ | \- | \/ | \/\/ | \* | \^ | \% | \& | \| | \=\= | \= | \!\= | \>\= | \<\= | \< | \> | \. | \:\: | \# | \: )\_
     )
 
 contexts:
@@ -95,10 +95,7 @@ contexts:
     - match: '\$'
       scope: keyword.declaration.anselme meta.function.anselme
       set: primary
-    - match: '\~'
-      scope: keyword.control.conditional.anselme
-      set: primary
-    - match: '\@|\;'
+    - match: '\;'
       scope: keyword.control.anselme
       set: primary
     - match: '\-'
@@ -213,7 +210,7 @@ contexts:
     - match: '\,'
       scope: punctuation.separator.sequence.anselme
       push: primary
-    - match: '\~|\~\?|\|\>'
+    - match: '\|\>'
       scope: keyword.control.conditional.anselme
       push: primary
     - match: '\#|\:\:|\:|\-\>'
